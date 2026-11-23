@@ -1,0 +1,51 @@
+# Holt die FotMob-Ratings des letzten Barça-Spiels und aktualisiert match-ratings.js.
+# Läuft automatisch alle 2 Stunden und lässt sich jederzeit von Hand starten
+# (GitHub-App / Website: Actions -> "Ratings holen" -> Run workflow).
+name: Ratings holen
+
+on:
+  schedule:
+    - cron: '15 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      match:
+        description: 'FotMob-Link (leer lassen = letztes Barça-Spiel)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ratings
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: FotMob-Daten holen
+        shell: pwsh
+        env:
+          MATCH: ${{ github.event.inputs.match }}
+        run: ./ratings-holen.ps1 -Match "$env:MATCH"
+
+      - name: Änderungen speichern
+        run: |
+          if git diff --quiet -- match-ratings.js; then
+            echo "Keine neuen Daten."
+            exit 0
+          fi
+          # nur committen, wenn sich mehr als der Abrufzeitpunkt geändert hat
+          if [ "$(git diff -U0 -- match-ratings.js | grep -E '^[+-] ' | grep -vc fetchedAt)" = "0" ]; then
+            echo "Nur Zeitstempel geändert, nichts zu tun."
+            git checkout -- match-ratings.js
+            exit 0
+          fi
+          git config user.name "ratings-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add match-ratings.js
+          git commit -m "Ratings aktualisiert"
+          git push
