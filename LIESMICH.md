@@ -3,6 +3,12 @@
 Alle Dateien müssen zusammen in diesem Ordner bleiben.
 **Start:** `index.html` doppelklicken → dort den passenden Generator wählen.
 
+**Online (iPad / Handy):** https://lorindjasari.github.io/barca-generatoren/
+- In Safari: Teilen → „Zum Home-Bildschirm“ → LJ-App auf dem Homescreen.
+- FotMob-Daten holt GitHub alle 2 Stunden automatisch. Sofort nach Abpfiff:
+  GitHub-App → Repository `barca-generatoren` → Actions → „Ratings holen“ → Run workflow, danach Seite neu laden.
+- Eingaben (Texte, Noten, eigene Fotos) werden pro Gerät im Browser gespeichert.
+
 ## Line-up vor dem Spiel
 1. In der Übersicht **Line-up** öffnen.
 2. Possible XI / Official XI, Gegner, Datum, Trikot, Formation, Spieler, Leaks und Ausfälle einstellen.
