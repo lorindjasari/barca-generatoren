@@ -5,8 +5,9 @@ Alle Dateien müssen zusammen in diesem Ordner bleiben.
 
 **Online (iPad / Handy):** https://lorindjasari.github.io/barca-generatoren/
 - In Safari: Teilen → „Zum Home-Bildschirm“ → LJ-App auf dem Homescreen.
-- FotMob-Daten holt GitHub alle 2 Stunden automatisch. Sofort nach Abpfiff:
-  GitHub-App → Repository `barca-generatoren` → Actions → „Ratings holen“ → Run workflow, danach Seite neu laden.
+- FotMob-Daten holt GitHub alle 15 Minuten automatisch – ca. 15–30 Min. nach Abpfiff ist das Spiel da,
+  einfach die Seite neu laden. Der Laptop wird dafür nicht mehr gebraucht.
+- Anderes Spiel erzwingen: GitHub-App → `barca-generatoren` → Actions → „Ratings holen“ → Run workflow (FotMob-Link eintragen).
 - Eingaben (Texte, Noten, eigene Fotos) werden pro Gerät im Browser gespeichert.
 
 ## Line-up vor dem Spiel

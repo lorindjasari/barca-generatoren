@@ -73,7 +73,7 @@ function Convert-Player($p, [bool]$starter) {
 $data = [ordered]@{
   matchId     = "$($g.matchId)"
   url         = $matchUrl
-  fetchedAt   = (Get-Date).ToString('s')
+  fetchedAt   = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
   utcDate     = $g.matchTimeUTCDate
   finished    = [bool]$g.finished
   league      = $g.leagueName
