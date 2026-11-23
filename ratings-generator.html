@@ -433,6 +433,38 @@ function bustRating(cx,cy,rating){
   ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,x+w/2,y+h/2+1);
 }
 function posStadium(p){ return [140+(1-p.x)*800, 985-(p.y-0.1)/0.77*600]; }
+// Spieler, die fast genau hintereinander stehen (z. B. Stürmer vor dem Zehner), auseinanderschieben,
+// damit Name/Rating des hinteren nicht den Kopf des vorderen verdeckt. Es werden ganze Reihen
+// verschoben (Formation bleibt gerade); dafür rücken Reihen ohne Überdeckung etwas zusammen.
+function spreadStacked(items){
+  const TOP=358, NEED=185, MINGAP=110, NEAR_X=100;
+  const rows=[];
+  [...items].sort((a,b)=>a.y-b.y).forEach(it=>{
+    const r=rows[rows.length-1];
+    if(r && it.y-r.y<30) r.items.push(it); else rows.push({y:it.y, items:[it]});
+  });
+  if(rows.length<2) return;
+  const n=rows.length-1, orig=[], need=[];
+  for(let i=0;i<n;i++){
+    const a=rows[i], b=rows[i+1];
+    orig.push(b.y-a.y);
+    const stacked=a.items.some(p=>b.items.some(q=>Math.abs(p.x-q.x)<NEAR_X));
+    need.push(stacked?NEED:Math.min(MINGAP,orig[i]));
+  }
+  if(need.every((g,i)=>g<=orig[i])) return;          // nichts verdeckt -> Layout unverändert
+  const gaps=orig.map((o,i)=>Math.max(o,need[i]));
+  const avail=rows[n].y-Math.min(TOP,rows[0].y);
+  let excess=gaps.reduce((s,g)=>s+g,0)-avail;
+  if(excess>0){
+    const slack=gaps.map((g,i)=>g-need[i]), total=slack.reduce((s,v)=>s+v,0);
+    const k=Math.min(1, excess/(total||1));
+    gaps.forEach((g,i)=>gaps[i]=g-slack[i]*k);
+    excess-=total*k;
+    if(excess>0){ const f=avail/(avail+excess); gaps.forEach((g,i)=>gaps[i]=g*f); }
+  }
+  let y=rows[n].y;                                    // Torwart-Reihe bleibt fest
+  for(let i=n-1;i>=0;i--){ y-=gaps[i]; rows[i].items.forEach(it=>it.y+= y-rows[i].y); rows[i].y=y; }
+}
 
 function renderStadium(){
   ctx.drawImage(stadiumBg(),0,0);
@@ -450,6 +482,7 @@ function renderStadium(){
   drawLogo();
 
   const items=S.players.filter(p=>!p.isSub && !p.hide).map(p=>{ const [x,y]=posStadium(p); return {p,x,y}; });
+  spreadStacked(items);
   const maxWFor = it => {
     const dx = items.filter(o=>o!==it && Math.abs(o.y-it.y)<70).map(o=>Math.abs(o.x-it.x));
     return Math.max(90, Math.min(210, (dx.length?Math.min(...dx):999)-14));
