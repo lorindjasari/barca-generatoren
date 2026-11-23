@@ -118,7 +118,7 @@
 <script src="player-photos-away.js"></script>
 <script src="player-photos-third.js"></script>
 <script src="brand-logo.js"></script>
-<script src="match-ratings.js"></script>
+<script>document.write('<script src="match-ratings.js?v='+Date.now()+'"><\/script>')</script>
 <script>
 /* ============================================================
    KONFIGURATION
@@ -537,7 +537,7 @@ function buildStatus(){
   const t=new Date(M.fetchedAt).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'});
   el.className='status';
   el.innerHTML=`<b>${esc(M.home.name)} ${M.home.score}–${M.away.score} ${esc(M.away.name)}</b> · ${esc(M.league)}<br>`+
-    `<span class="hint">FotMob-Daten geladen am ${t}${M.finished?'':' · <b>Spiel nicht beendet – vorläufig</b>'}. ${ONLINE?'Neue Daten kommen automatisch (alle 2 Std.) oder sofort über GitHub → Actions → „Ratings holen“ → Run workflow.':'Neues Spiel? <code>Ratings holen.bat</code> erneut starten.'}</span>`;
+    `<span class="hint">FotMob-Daten geladen am ${t}${M.finished?'':' · <b>Spiel nicht beendet – vorläufig</b>'}. ${ONLINE?'Neue Daten kommen automatisch ca. 15–30 Min. nach Abpfiff – einfach die Seite neu laden.':'Neues Spiel? <code>Ratings holen.bat</code> erneut starten.'}</span>`;
 }
 function buildKitSeg(){
   const box=$('#kitSeg'); box.innerHTML='';
