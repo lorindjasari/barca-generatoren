@@ -39,10 +39,11 @@
   .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   .seg button{padding:10px 6px;font-size:13px}
   .seg button.on{background:var(--yellow);color:#0a1230;border-color:var(--yellow)}
-  .slot{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;margin-bottom:6px}
+  .slot{display:grid;grid-template-columns:44px 1fr auto auto;gap:8px;align-items:center;margin-bottom:6px}
   .slot .pos{font-weight:800;color:var(--muted);font-size:12px}
   .slot select.dup{border-color:var(--red)}
   .leak{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--yellow);cursor:pointer;user-select:none}
+  .leak.doubt{color:#ff9f1c}
   .chips{display:flex;flex-wrap:wrap;gap:6px}
   .chip{padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:700;font-size:12px;user-select:none}
   .chip.on{border-color:var(--red);color:#fff;background:rgba(255,84,112,.18)}
@@ -101,7 +102,7 @@
       <summary>2 · Aufstellung</summary>
       <div class="body">
         <div id="slots"></div>
-        <div class="hint">„Leak“ anhaken = gelber Ring + LEAK-Tag. Doppelt vergebene Spieler werden rot markiert.</div>
+        <div class="hint">„Leak“ anhaken = gelber Ring + LEAK-Tag. „Doubt“ = oranger DOUBT-Tag (fraglicher Einsatz). Doppelt vergebene Spieler werden rot markiert.</div>
       </div>
     </details>
 
@@ -166,7 +167,7 @@
    ============================================================ */
 const C = {
   bg:'#0d1633', pitch:'#101a3f', stripe:'rgba(255,255,255,0.018)', lines:'#2c3a7c',
-  white:'#ffffff', yellow:'#f7cf3d', red:'#ff5470', muted:'#a6aecb', dim:'#7c86ab', dark:'#0d1633'
+  white:'#ffffff', yellow:'#f7cf3d', orange:'#ff9f1c', red:'#ff5470', muted:'#a6aecb', dim:'#7c86ab', dark:'#0d1633'
 };
 const FONT = 'Inter, system-ui, sans-serif';
 const PITCH = {x:80, y:270, w:920, h:840};
@@ -208,6 +209,7 @@ const DEFAULT_STATE = {
   badge:'POSSIBLE XI', title:'VS ATLÉTICO', day:'Sunday', time:'9PM CET', formation:'4-3-3',
   slots:['joan-garcia','cancelo','martin','cubarsi','eric-garcia','pedri','bernal','fermin','gordon','raphinha','yamal'],
   leaks:[false,false,false,false,true,false,true,false,false,false,false],
+  doubts:[false,false,false,false,false,false,false,false,false,false,false],
   out:['rodri','kounde','olmo','espart','bardghji'],
   note:'Yellow = based on leaks · not the official line-up',
   sources:'Sources: Sport via Get Spanish Football News (06.11.), Everything Barça, FotMob · as of 07.11.2026',
@@ -239,6 +241,7 @@ const IDB = (()=>{
 
 let S = Object.assign({}, DEFAULT_STATE, LS.get('lu_state',{}));
 if(!KITS[S.kit]) S.kit='home';
+if(!Array.isArray(S.doubts)) S.doubts=Array(11).fill(false);
 let ROSTER = LS.get('lu_roster2', null) || DEFAULT_ROSTER;
 const save = ()=>{ LS.set('lu_state',S); LS.set('lu_roster2',ROSTER); };
 const byId = id => ROSTER.find(p=>p.id===id);
@@ -336,6 +339,13 @@ function drawLeakTag(cx,cy){
   const x=cx+R*0.35, y=cy-R-18;
   rr(x,y,w,h,6); ctx.fillStyle=C.red; ctx.fill();
   ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,x+w/2,y+h/2+1);
+}
+
+function drawDoubtTag(cx,cy){
+  ctx.font=`800 17px ${FONT}`; const t='DOUBT', w=ctx.measureText(t).width+22, h=28;
+  const x=cx+R*0.55, y=cy+R*0.25;
+  rr(x,y,w,h,6); ctx.fillStyle=C.orange; ctx.fill();
+  ctx.fillStyle=C.dark; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,x+w/2,y+h/2+1);
 }
 
 function drawLogo(){
@@ -441,19 +451,25 @@ function drawBust(cx,cy,p,leak){
     ctx.lineWidth=6; ctx.lineCap='round'; ctx.strokeStyle=C.yellow; ctx.stroke();
   }
 }
-function drawBustName(cx,cy,name,leak){
+function drawBustName(cx,cy,name,leak,doubt){
   const t=name.toUpperCase(); let size=32;
   ctx.save(); ctx.letterSpacing='3px';
   do{ ctx.font=`400 ${size}px "Bebas Neue", ${FONT}`; if(ctx.measureText(t).width<=200) break; size--; }while(size>18);
   ctx.textAlign='center'; ctx.textBaseline='alphabetic';
   ctx.shadowColor='rgba(0,0,20,.85)'; ctx.shadowBlur=10; ctx.shadowOffsetY=2;
-  ctx.fillStyle=leak?C.yellow:C.white; ctx.fillText(t,cx+1.5,cy+88);
+  ctx.fillStyle=doubt?C.orange:leak?C.yellow:C.white; ctx.fillText(t,cx+1.5,cy+88);
   ctx.restore();
 }
 function drawBustLeakTag(cx,cy){
   ctx.font=`800 16px ${FONT}`; const t='LEAK', w=ctx.measureText(t).width+20, h=26, x=cx+40, y=cy-104;
   rr(x,y,w,h,6); ctx.fillStyle=C.red; ctx.fill();
   ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,x+w/2,y+h/2+1);
+}
+
+function drawBustDoubtTag(cx,cy){
+  ctx.font=`800 16px ${FONT}`; const t='DOUBT', w=ctx.measureText(t).width+20, h=26, x=cx+46, y=cy-6;
+  rr(x,y,w,h,6); ctx.fillStyle=C.orange; ctx.fill();
+  ctx.fillStyle=C.dark; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,x+w/2,y+h/2+1);
 }
 
 function renderStadium(){
@@ -471,16 +487,17 @@ function renderStadium(){
   ctx.fillStyle=tg; ctx.textBaseline='alphabetic'; ctx.fillText(title,58,212);
   ctx.restore();
 
-  ctx.font=`600 26px ${FONT}`; ctx.fillStyle='#cdd7ff'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-  ctx.fillText([S.day,S.time,S.formation].filter(Boolean).join(' · '),60,250);
+  const sub=[S.day,S.time,S.formation].filter(Boolean).join(' · ');
+  fitFont(sub,600,26,380,18); ctx.fillStyle='#cdd7ff'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.fillText(sub,60,250);
   drawLogo();
 
   const F=FORMATIONS[S.formation]||FORMATIONS['4-3-3'];
-  const items=F.pos.map(([x,y],i)=>({x,y,p:byId(S.slots[i]),leak:!S.official&&!!S.leaks[i]}));
+  const items=F.pos.map(([x,y],i)=>({x,y,p:byId(S.slots[i]),leak:!S.official&&!!S.leaks[i],doubt:!S.official&&!!S.doubts[i]}));
   // von hinten nach vorne zeichnen
   [...items].sort((a,b)=>a.y-b.y).forEach(it=>drawBust(it.x,it.y,it.p,it.leak));
-  items.forEach(it=>drawBustName(it.x,it.y,it.p?it.p.name:'TBD',it.leak));
-  items.forEach(it=>{ if(it.leak) drawBustLeakTag(it.x,it.y); });
+  items.forEach(it=>drawBustName(it.x,it.y,it.p?it.p.name:'TBD',it.leak,it.doubt));
+  items.forEach(it=>{ if(it.leak) drawBustLeakTag(it.x,it.y); if(it.doubt) drawBustDoubtTag(it.x,it.y); });
   drawFooter();
 }
 
@@ -506,10 +523,10 @@ function renderClassic(){
   // Spielfeld + Spieler
   drawPitch();
   const F=FORMATIONS[S.formation]||FORMATIONS['4-3-3'];
-  const items=F.pos.map(([x,y],i)=>({x,y,p:byId(S.slots[i]),leak:!S.official&&!!S.leaks[i]}));
+  const items=F.pos.map(([x,y],i)=>({x,y,p:byId(S.slots[i]),leak:!S.official&&!!S.leaks[i],doubt:!S.official&&!!S.doubts[i]}));
   items.forEach(it=>drawPlayerCircle(it.x,it.y,it.p,it.leak));
   items.forEach(it=>pill(it.p?it.p.name:'TBD',it.x,it.y+R+32,it.leak?{bg:C.yellow}:{}));
-  items.forEach(it=>{ if(it.leak) drawLeakTag(it.x,it.y); });
+  items.forEach(it=>{ if(it.leak) drawLeakTag(it.x,it.y); if(it.doubt) drawDoubtTag(it.x,it.y); });
 
   drawFooter();
 }
@@ -595,9 +612,12 @@ function buildSlots(){
   F.labels.forEach((lab,i)=>{
     const row=document.createElement('div'); row.className='slot';
     row.innerHTML=`<span class="pos">${lab}</span><select>${playerOptions(S.slots[i])}</select>
-      <label class="leak"><input type="checkbox" ${S.leaks[i]?'checked':''}>Leak</label>`;
+      <label class="leak"><input type="checkbox" ${S.leaks[i]?'checked':''}>Leak</label>
+      <label class="leak doubt"><input type="checkbox" ${S.doubts[i]?'checked':''}>Doubt</label>`;
     row.querySelector('select').onchange=e=>{ S.slots[i]=e.target.value; markDup(); kitWarn(); update(); };
-    row.querySelector('input').onchange=e=>{ S.leaks[i]=e.target.checked; update(); };
+    const [leakCb,doubtCb]=row.querySelectorAll('input');
+    leakCb.onchange=e=>{ S.leaks[i]=e.target.checked; update(); };
+    doubtCb.onchange=e=>{ S.doubts[i]=e.target.checked; update(); };
     box.appendChild(row);
   });
   markDup();
