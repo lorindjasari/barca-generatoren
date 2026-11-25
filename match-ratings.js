@@ -2,7 +2,7 @@
 window.MATCH_RATINGS = {
   "matchId": "6106421",
   "url": "https://www.fotmob.com/matches/barcelona-vs-sabah-fk/5vx6ki4t#6106421",
-  "fetchedAt": "2026-11-25T20:21:27Z",
+  "fetchedAt": "2026-11-25T20:54:22Z",
   "utcDate": "2026-11-25T17:45:00Z",
   "finished": true,
   "league": "Champions League",
@@ -99,7 +99,7 @@ window.MATCH_RATINGS = {
       "shirt": "3",
       "x": 0.875,
       "y": 0.292,
-      "rating": 7.7,
+      "rating": 7.5,
       "potm": false,
       "goals": 0,
       "ownGoals": 0,
