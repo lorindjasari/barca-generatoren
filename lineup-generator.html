@@ -47,6 +47,7 @@
   .chips{display:flex;flex-wrap:wrap;gap:6px}
   .chip{padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:700;font-size:12px;user-select:none}
   .chip.on{border-color:var(--red);color:#fff;background:rgba(255,84,112,.18)}
+  #benchChips .chip.on{border-color:#3ddc97;background:rgba(61,220,151,.16)}
   .player{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:var(--panel2)}
   .ptop{display:grid;grid-template-columns:1fr auto;gap:8px}
   .kits{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -109,6 +110,12 @@
     <details open>
       <summary>3 · Ausfälle (OUT)</summary>
       <div class="body"><div class="chips" id="outChips"></div></div>
+    </details>
+
+    <details open>
+      <summary>3b · Bank (BENCH)</summary>
+      <div class="body"><div class="chips" id="benchChips"></div>
+        <div class="hint">Angeklickte Spieler erscheinen unten auf der Grafik in der Zeile „BENCH“ (Reihenfolge wie im Kader).</div></div>
     </details>
 
     <details>
@@ -197,7 +204,7 @@ const DEFAULT_ROSTER = [
   ['cancelo','Cancelo'],['balde','Balde'],['martin','G. Martín'],['cubarsi','Cubarsí'],['christensen','Christensen'],
   ['eric-garcia','Eric García'],['kounde','Koundé'],['espart','Espart'],['farinas','Fariñas'],
   ['bernal','Bernal'],['de-jong','De Jong'],['pedri','Pedri'],['gavi','Gavi'],['fermin','Fermín'],['olmo','Olmo'],['rodri','Rodri'],
-  ['raphinha','Raphinha'],['yamal','Yamal'],['gordon','Gordon'],['adeyemi','Adeyemi'],['gabriel-jesus','G. Jesus'],
+  ['raphinha','Raphinha'],['yamal','Yamal'],['gordon','Gordon'],['adeyemi','Adeyemi'],['gabriel-jesus','G. Jesus'],['alex-campos','Á. Campos'],
   ['bardghji','Bardghji'],['bisiwu','Bisiwu'],['hamza','Hamza'],
 ].map(([id,name])=>({id,name,zoom:1,dy:0}));
 
@@ -211,6 +218,7 @@ const DEFAULT_STATE = {
   leaks:[false,false,false,false,true,false,true,false,false,false,false],
   doubts:[false,false,false,false,false,false,false,false,false,false,false],
   out:['rodri','kounde','olmo','espart','bardghji'],
+  bench:[],
   note:'Yellow = based on leaks · not the official line-up',
   sources:'Sources: Sport via Get Spanish Football News (06.11.), Everything Barça, FotMob · as of 07.11.2026',
 };
@@ -242,6 +250,7 @@ const IDB = (()=>{
 let S = Object.assign({}, DEFAULT_STATE, LS.get('lu_state',{}));
 if(!KITS[S.kit]) S.kit='home';
 if(!Array.isArray(S.doubts)) S.doubts=Array(11).fill(false);
+if(!Array.isArray(S.bench)) S.bench=[];
 let ROSTER = LS.get('lu_roster2', null) || DEFAULT_ROSTER;
 const save = ()=>{ LS.set('lu_state',S); LS.set('lu_roster2',ROSTER); };
 const byId = id => ROSTER.find(p=>p.id===id);
@@ -549,9 +558,25 @@ function drawFooter(){
     y+=h;
   }
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  let noteY=y+48;
+  // Bank: kompakte Namenszeile(n) unter OUT, Reihenfolge wie im Kader
+  const bench=ROSTER.filter(p=>(S.bench||[]).includes(p.id));
+  if(bench.length){
+    const maxX=1020; let by=y+(out.length?36:24);
+    ctx.font=`900 22px ${FONT}`; ctx.fillStyle='#3ddc97'; ctx.fillText('BENCH',60,by);
+    const x0=Math.max(out.length?130:0, 60+ctx.measureText('BENCH').width+16);
+    ctx.font=`600 20px ${FONT}`; ctx.fillStyle='#cdd7ff';
+    let line='';
+    bench.map(p=>p.name).forEach((n,i)=>{
+      const t=line?line+'  ·  '+n:n;
+      if(ctx.measureText(t).width>maxX-x0 && line){ ctx.fillText(line,x0,by); by+=28; line=n; } else line=t;
+    });
+    if(line) ctx.fillText(line,x0,by);
+    noteY=by+40;
+  }
   const note=S.official?S.noteOfficial:S.note;
-  if(note){ ctx.font=`600 21px ${FONT}`; ctx.fillStyle=S.official?'#3ddc97':C.dim; ctx.fillText(note,60,y+48); }
-  if(S.sources){ fitFont(S.sources,500,16,960,10); ctx.fillStyle='#5f6990'; ctx.fillText(S.sources,60,Math.max(1312,y+110)); }
+  if(note){ ctx.font=`600 21px ${FONT}`; ctx.fillStyle=S.official?'#3ddc97':C.dim; ctx.fillText(note,60,noteY); }
+  if(S.sources){ fitFont(S.sources,500,16,960,10); ctx.fillStyle='#5f6990'; ctx.fillText(S.sources,60,Math.min(1336,Math.max(1312,noteY+(note?38:0)))); }
 }
 
 /* ============================================================
@@ -633,6 +658,12 @@ function buildOut(){
     const c=document.createElement('span'); c.className='chip'+(S.out.includes(p.id)?' on':''); c.textContent=p.name;
     c.onclick=()=>{ S.out=S.out.includes(p.id)?S.out.filter(x=>x!==p.id):[...S.out,p.id]; c.classList.toggle('on'); update(); };
     box.appendChild(c);
+  });
+  const bb=$('#benchChips'); bb.innerHTML='';
+  ROSTER.forEach(p=>{
+    const c=document.createElement('span'); c.className='chip'+(S.bench.includes(p.id)?' on':''); c.textContent=p.name;
+    c.onclick=()=>{ S.bench=S.bench.includes(p.id)?S.bench.filter(x=>x!==p.id):[...S.bench,p.id]; c.classList.toggle('on'); update(); };
+    bb.appendChild(c);
   });
 }
 
